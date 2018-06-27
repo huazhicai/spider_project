@@ -58,14 +58,29 @@ class Phone58SpiderMiddleware(object):
 
 
 class RandomUserAgentMiddleware(object):
+    # 随机更换用户代理
     def __init__(self, agents):
         self.agents = agents
 
     @classmethod
     def from_crawler(cls, crawler):
-        agents = crawler.settings.getlist('USER_AGENT')
-        return cls(agents)
+        agent = crawler.settings.getlist('USER_AGENTS')
+        return cls(agent)
 
     def process_request(self, request, spider):
-        agent = random.choice(self.agents)
-        request.headers['User-Agent'] = agent
+        request.headers.setdefault("User-Agent", random.choice(self.agents))
+
+
+class RandomProxyMiddleware(object):
+    # 随机更换ip
+    def __init__(self, ip):
+        self.ip = ip
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        ip_pool = crawler.settings.getlist("IP_POOL")
+        return cls(ip_pool)
+
+    def process_request(self, request, spider):
+        this_ip = random.choice(self.ip)
+        request.meta["proxy"] = "http://" + this_ip["ipaddr"]

@@ -16,7 +16,7 @@ NEWSPIDER_MODULE = 'phone58.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'phone58 (+http://www.yourdomain.com)'
-USER_AGENT = [
+USER_AGENTS = [
     "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
     "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Acoo Browser; SLCC1; .NET CLR 2.0.50727; Media Center PC 5.0; .NET CLR 3.0.04506)",
     "Mozilla/4.0 (compatible; MSIE 7.0; AOL 9.5; AOLBuild 4337.35; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
@@ -90,9 +90,10 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'phone58.middlewares.MyCustomDownloaderMiddleware': 543,
-# }
+DOWNLOADER_MIDDLEWARES = {
+    # 'Top250.middlewares.Top250DownloaderMiddleware': None,
+    'phone58.middlewares.RandomUserAgentMiddleware': 300
+}
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
@@ -127,7 +128,7 @@ ITEM_PIPELINES = {
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"
 # LOG_FILE = "myspider.log"
 
 # database
@@ -137,3 +138,19 @@ MYSQL_USER = 'root'
 MYSQL_PASSWD = '110'
 
 RETRY = 15
+DOWNLOAD_TIMEOUT = 30
+
+
+# 禁止重定向
+# REDIRECT_ENABLED = False
+
+
+IP_POOL = [
+    {"ipaddr": "61.129.70.131:8080"},
+    {"ipaddr": "61.152.81.193:9100"},
+    {"ipaddr": "120.204.85.29:3128"},
+    {"ipaddr": "219.228.126.86:8123"},
+    {"ipaddr": "61.152.81.193:9100"},
+    {"ipaddr": "218.82.33.225:53853"},
+    {"ipaddr": "223.167.190.17:42789"}
+]
