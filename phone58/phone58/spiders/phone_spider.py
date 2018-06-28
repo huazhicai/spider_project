@@ -21,6 +21,7 @@ class PhoneSpiderSpider(scrapy.Spider):
             item['title'] = title[0] + '|' + title[-1]
             item['salary'] = i.xpath('.//p/text()').extract_first()
             item['company'] = i.xpath('./div[@class="item_con job_comp"]/div/a/text()').extract_first()
+            item['phone'] = None
             # 企业uid
             uid = i.xpath('.//div[@class="item_con job_comp"]/input/@uid').extract_first().split('_')[0]
             mingqi = i.xpath('.//div[@class="comp_name"]/i/@class').extract_first()
@@ -30,12 +31,11 @@ class PhoneSpiderSpider(scrapy.Spider):
             else:
                 url = "http://qy.58.com/" + uid + '/'
                 yield scrapy.Request(url, meta={'item': item}, callback=self.parse_detail)
-        next_page = response.xpath('//div[@class="pagesout"]/a[class="next"]/@href').extract_first()
+        print(response)
+        next_page = response.xpath('//div[@class="pagesout"]/a[@class="next"]/@href').extract_first()
         if next_page is not None:
             self.logger.info("Start Crawl: %s" % next_page)
-            # yield response.follow(next_page, callback=self.parse)
-            url = response.urljoin(next_page)
-            yield scrapy.Request(url, callback=self.parse)
+            yield response.follow(next_page, callback=self.parse)
 
     def parse_detail_mq(self, response):
         item = response.meta['item']
@@ -51,13 +51,10 @@ class PhoneSpiderSpider(scrapy.Spider):
         elif 'qy.58.com' in url:
             img_url = response.xpath('//div[@class="intro_down"]/table/tbody/tr[4]/td[3]/img/@src').extract_first()
             if img_url is not None:
-                img_file = 'F:\Project\spider_project\phone58\phone58\spiders\images\%s.gif' % url.split('/')[-2]
+                img_file = '.\images\%s.gif' % url.split('/')[-2]
                 urllib.request.urlretrieve(img_url, img_file)
                 item['phone'] = pytesseract.image_to_string(Image.open(img_file))
-                yield item
-            else:
-                item['phone'] = None
-                yield item
+            yield item
         else:
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_official)
 
@@ -70,18 +67,15 @@ class PhoneSpiderSpider(scrapy.Spider):
         url = response.xpath('//div[@class="basicMsg"]/ul/li[6]/a/text()').extract_first()
         item['website'] = url
         item['address'] = response.xpath('//div[@class="basicMsg"]/ul/li[8]/div/var/text()').extract_first()
-        if '5858.com' in url:
+        if url and '5858.com' in url:
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_phone)
-        elif 'qy.58.com' in url:
+        elif url and 'qy.58.com' in url:
             img_url = response.xpath('//div[@class="basicMsg"]/ul/li[4]/img/@src').extract_first()
             if img_url is not None:
-                img_file = 'F:\Project\spider_project\phone58\phone58\spiders\images\%s.gif' % url.split('/')[-2]
+                img_file = 'C:\\Users\93684\Desktop\spider_project\phone58\phone58\spiders\images\%s.gif' % url.split('/')[-2]
                 urllib.request.urlretrieve(img_url, img_file)
                 item['phone'] = pytesseract.image_to_string(Image.open(img_file))
-                yield item
-            else:
-                item['phone'] = None
-                yield item
+            yield item
         else:
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_official)
 
@@ -92,28 +86,14 @@ class PhoneSpiderSpider(scrapy.Spider):
             phone_obj = re.search(r'联系电话.*?<span>(.+?)</span>', response.text)
             if phone_obj is not None:
                 item['phone'] = phone_obj.group(1)
-                yield item
-            else:
-                yield item
-        else:
-            yield item
+        yield item
 
     # 解析公司官网
     def parse_official(self, response):
         item = response.meta['item']
-        cellPhone = re.compile(r'\d{11}')
-        phone = re.compile(r'''
-                    (0571|\(0571\))?
-                    (\s|-|\.)?
-                    (\d{8}|\d{7})''')
-        retval = cellPhone.search(response.text)
-        retval2 = phone.search(response.text)
-        if retval is not None:
-            item['phone'] = retval.group()
-            yield item
-        elif retval2 is not None:
-            item['phone'] = retval2.group(1)+retval2.group(2)+retval2.group(3)
-            yield item
-        else:
-            item['phone'] = None
-            yield item
+        phone_pattern = re.compile(r'(1\d{10})|(0571-\d{7,8})')
+        phone_obj = phone_pattern.search(response.text)
+        if phone_obj is not None:
+            item['phone'] = phone_obj.group(1) or phone_obj.group(2)
+        yield item
+

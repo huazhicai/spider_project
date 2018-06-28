@@ -1,4 +1,5 @@
 ## 爬取58同城电销招聘信息，重点爬取招聘方电话号码
+- 初始url：'http://hz.58.com/dianhuaxiaoshou/pn1/' + 'pve_5363_269/' (房地产)
 - 需要的东西
     - python3.6
     - scrapy1.0
@@ -14,3 +15,9 @@
     response.text 发现没有这个东东。浏览器和response毕竟存在一些差异。
     - in 操作符只用于sequence, 当对象为NoneType时，不可用
         - if mingqi and 'mingqi' in mingqi:
+
+- 搜索结果是7千条左右，但是70页无法全部展示，只有2千多条，
+所以还要划分
+    - 两种划分方式：
+        - 按行业划分
+        - 按区划分

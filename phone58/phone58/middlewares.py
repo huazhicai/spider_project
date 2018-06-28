@@ -71,16 +71,16 @@ class RandomUserAgentMiddleware(object):
         request.headers.setdefault("User-Agent", random.choice(self.agents))
 
 
-class RandomProxyMiddleware(object):
-    # 随机更换ip
-    def __init__(self, ip):
-        self.ip = ip
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        ip_pool = crawler.settings.getlist("IP_POOL")
-        return cls(ip_pool)
-
-    def process_request(self, request, spider):
-        this_ip = random.choice(self.ip)
-        request.meta["proxy"] = "http://" + this_ip["ipaddr"]
+# class RandomProxyMiddleware(object):
+#     # 随机更换ip
+#     def __init__(self, ip):
+#         self.ip = ip
+#
+#     @classmethod
+#     def from_crawler(cls, crawler):
+#         ip_pool = crawler.settings.getlist("IP_POOL")
+#         return cls(ip_pool)
+#
+#     def process_request(self, request, spider):
+#         this_ip = random.choice(self.ip)
+#         request.meta["proxy"] = "http://" + this_ip["ipaddr"]
