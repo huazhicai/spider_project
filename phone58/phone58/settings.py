@@ -63,7 +63,7 @@ CONCURRENT_REQUESTS = 32
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 4
+DOWNLOAD_DELAY = 3
 # The download delay setting will honor only one of:
 # CONCURRENT_REQUESTS_PER_DOMAIN = 16
 # CONCURRENT_REQUESTS_PER_IP = 16
@@ -136,9 +136,6 @@ MYSQL_HOST = 'localhost'
 MYSQL_DB = 'test'
 MYSQL_USER = 'root'
 MYSQL_PASSWD = '654321'
-
-RETRY = 15
-DOWNLOAD_TIMEOUT = 30
 
 
 # 禁止重定向

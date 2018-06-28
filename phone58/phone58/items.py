@@ -8,6 +8,10 @@
 import scrapy
 
 
+class IndustryUrlItem(scrapy.Item):
+    url = scrapy.Field()
+
+
 class Phone58Item(scrapy.Item):
     # define the fields for your item here like:
     title = scrapy.Field()

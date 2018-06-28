@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
+import os
 import re
 import urllib.request
 from PIL import Image
 import pytesseract
 
 import scrapy
+from scrapy_redis.spiders import RedisSpider
 from ..items import Phone58Item
 
 
-class PhoneSpiderSpider(scrapy.Spider):
+class PhoneSpiderSpider(RedisSpider):
     name = 'phone_spider'
     # allowed_domains = ['hz.58.com']
-    start_urls = ['http://hz.58.com/dianhuaxiaoshou/']
+    # start_urls = ['http://hz.58.com/dianhuaxiaoshou/']
+    custom_settings = {
+        'REDIS_START_URLS_AS_SET': True,
+        'RETRY_TIMES': 15,
+        'DOWNLOAD_TIMEOUT': 30
+    }
 
     def parse(self, response):
         resp = response.xpath('//*[@id="list_con"]/li')
@@ -51,7 +58,7 @@ class PhoneSpiderSpider(scrapy.Spider):
         elif 'qy.58.com' in url:
             img_url = response.xpath('//div[@class="intro_down"]/table/tbody/tr[4]/td[3]/img/@src').extract_first()
             if img_url is not None:
-                img_file = '.\images\%s.gif' % url.split('/')[-2]
+                img_file = os.path.abspath('images') + '\%s.gif' % url.split('/')[-2]
                 urllib.request.urlretrieve(img_url, img_file)
                 item['phone'] = pytesseract.image_to_string(Image.open(img_file))
             yield item
@@ -72,7 +79,7 @@ class PhoneSpiderSpider(scrapy.Spider):
         elif url and 'qy.58.com' in url:
             img_url = response.xpath('//div[@class="basicMsg"]/ul/li[4]/img/@src').extract_first()
             if img_url is not None:
-                img_file = 'C:\\Users\93684\Desktop\spider_project\phone58\phone58\spiders\images\%s.gif' % url.split('/')[-2]
+                img_file = os.path.abspath('images')+'\%s.gif' % url.split('/')[-2]
                 urllib.request.urlretrieve(img_url, img_file)
                 item['phone'] = pytesseract.image_to_string(Image.open(img_file))
             yield item

@@ -5,20 +5,38 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import pymysql
-from . import settings
+import redis
+
+
+class RedisStartUrlsPipeline(object):
+    """
+    把电话销售起始页保存到 redis(industry:start_urls)
+    """
+
+    def __init__(self, host, port, db):
+        self.redis_client = redis.StrictRedis(
+            host=host, port=port, db=db
+        )
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(
+            host=crawler.settings.get('REDIS_HOST'),
+            port=crawler.settings.get('REDIS_PORT'),
+            db=crawler.settings.get('REDIS_DB')
+        )
+
+    def process_item(self, item, spider):
+        if type(item).__name__ == 'IndustryUrlItem':
+            redis_key = 'industry:start_urls'
+            self.redis_client.sadd(redis_key, item['url'])
+            spider.logger.debug(
+                '=========== Success push start_urls to REDIS with url {} ==========='.format(item['url']))
+            return item
 
 
 class Phone58Pipeline(object):
-    # def __init__(self):
-    #     self.connect = pymysql.connect(
-    #         host=settings.MYSQL_HOST,
-    #         db=settings.MYSQL_DB,
-    #         user=settings.MYSQL_USER,
-    #         passwd=settings.MYSQL_PASSWD,
-    #         port=3306,
-    #         charset='utf8'
-    #     )
-    #     self.cursor = self.connect.cursor()
+
     def __init__(self, host, db, user, passwd):
         self.connect = pymysql.connect(
             host=host,
@@ -38,10 +56,6 @@ class Phone58Pipeline(object):
             crawler.settings.get('MYSQL_USER'),
             crawler.settings.get('MYSQL_PASSWD')
         )
-
-    # @classmethod
-    # def from_settings(cls, settings):
-    #     args = settings['MYSQL_HOST']
 
     def process_item(self, item, spider):
         if type(item).__name__ == 'Phone58Item':
@@ -64,3 +78,14 @@ class Phone58Pipeline(object):
 
     def close_spider(self, spider):
         self.connect.close()
+
+
+# 增量爬取
+# class DuplicatesPipeline(object):
+#     conn = pymysql.connect(user='root', passwd='654321', db='test')
+#
+#     def __init__(self):
+#
+
+
+
