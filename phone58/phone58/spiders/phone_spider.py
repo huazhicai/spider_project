@@ -40,7 +40,6 @@ class PhoneSpiderSpider(scrapy.Spider):
             else:
                 url = "http://qy.58.com/" + uid + '/'
                 yield scrapy.Request(url, meta={'item': item}, callback=self.parse_detail)
-        print(response)
         next_page = response.xpath('//div[@class="pagesout"]/a[@class="next"]/@href').extract_first()
         if next_page is not None:
             self.logger.info("Start Crawl: %s" % next_page)
@@ -60,12 +59,19 @@ class PhoneSpiderSpider(scrapy.Spider):
         elif 'qy.58.com' in url:
             img_url = response.xpath('//div[@class="intro_down"]/table/tbody/tr[4]/td[3]/img/@src').extract_first()
             if img_url is not None:
-                img_file = os.path.abspath('images') + '\%s.gif' % url.split('/')[-2]
-                urllib.request.urlretrieve(img_url, img_file)
-                item['phone'] = pytesseract.image_to_string(Image.open(img_file))
+                item['phone'] = self.download_read_phone(img_url, url)
             yield item
         else:
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_official)
+
+    # 下载并读取图片上的电话号码
+    def download_read_phone(self, img_url, url):
+        # 图片下载保存路径要用绝对路径
+        img_file = os.path.dirname(os.path.abspath(__file__)) + '\images\%s.gif' % url.split('/')[-2]
+        if not os.path.exists(img_file):
+            urllib.request.urlretrieve(img_url, img_file)
+        text = pytesseract.image_to_string(Image.open(img_file))
+        return text
 
     def parse_detail(self, response):
         item = response.meta['item']
@@ -81,9 +87,7 @@ class PhoneSpiderSpider(scrapy.Spider):
         elif url and 'qy.58.com' in url:
             img_url = response.xpath('//div[@class="basicMsg"]/ul/li[4]/img/@src').extract_first()
             if img_url is not None:
-                img_file = os.path.abspath('images')+'\%s.gif' % url.split('/')[-2]
-                urllib.request.urlretrieve(img_url, img_file)
-                item['phone'] = pytesseract.image_to_string(Image.open(img_file))
+                item['phone'] = self.download_read_phone(img_url, url)
             yield item
         else:
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_official)

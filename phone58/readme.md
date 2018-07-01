@@ -15,9 +15,17 @@
     response.text 发现没有这个东东。浏览器和response毕竟存在一些差异。
     - in 操作符只用于sequence, 当对象为NoneType时，不可用
         - if mingqi and 'mingqi' in mingqi:
+    - urlretrieve 下载图片总是遇到 error: no such file or directory
+        - os.path.abspath('images') 获取到的绝对路径是错的，
+        - 写真实的绝对路径，或者改为os.path.dirname(os.path.abspath(__file__))
 
 - 搜索结果是7千条左右，但是70页无法全部展示，只有2千多条，
 所以还要划分
     - 两种划分方式：
         - 按行业划分
         - 按区划分
+
+
+- 做几个版本划分
+    - v1.0 基本爬虫，就是只用scrapy框架，不借助其他模块
+    - v1.1
