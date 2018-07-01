@@ -133,7 +133,7 @@ LOG_LEVEL = "DEBUG"
 
 # database
 MYSQL_HOST = 'localhost'
-MYSQL_DB = 'test'
+MYSQL_DB = 'corporate_info'
 MYSQL_USER = 'root'
 MYSQL_PASSWD = '654321'
 
