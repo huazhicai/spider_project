@@ -4,25 +4,23 @@ import re
 import urllib.request
 from PIL import Image
 import pytesseract
+from scrapy_redis.spiders import RedisSpider
 
 import scrapy
 from ..items import Phone58Item
 
 
-class PhoneSpiderSpider(scrapy.Spider):
+class PhoneSpiderSpider(RedisSpider):
     name = 'phone_spider'
+    redis_key = "district:start_urls"
+
     # allowed_domains = ['hz.58.com']
-    start_urls = ['http://hz.58.com/job.shtml']
+    # start_urls = ['http://hz.58.com/job.shtml']
+    custom_settings = {
+        'REDIS_START_URLS_AS_SET': True,
+    }
 
     def parse(self, response):
-        base_url = 'http://hz.58.com/dianhuaxiaoshou'
-        for data in response.xpath('//*[@id="divIndCate"]/ul/li[position()>1]'):
-            suffix_url = data.xpath('./a/@href').extract_first()
-            if suffix_url:
-                url = base_url + suffix_url
-                yield scrapy.Request(url, callback=self.parse_index)
-
-    def parse_index(self, response):
         resp = response.xpath('//*[@id="list_con"]/li')
         for i in resp:
             item = Phone58Item()
@@ -43,7 +41,7 @@ class PhoneSpiderSpider(scrapy.Spider):
         next_page = response.xpath('//div[@class="pagesout"]/a[@class="next"]/@href').extract_first()
         if next_page is not None:
             self.logger.info("Start Crawl: %s" % next_page)
-            yield response.follow(next_page, callback=self.parse_index)
+            yield response.follow(next_page, callback=self.parse)
 
     def parse_detail_mq(self, response):
         item = response.meta['item']

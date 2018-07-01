@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS `enterprise_58`;
+DROP TABLE IF EXISTS `district`;
 
-CREATE TABLE `enterprise_58` (
+CREATE TABLE `district` (
 id int(6) unsigned not null auto_increment,
 title varchar(255) null,
 salary varchar(255) null,
