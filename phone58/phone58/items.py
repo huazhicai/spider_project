@@ -8,6 +8,10 @@
 import scrapy
 
 
+class DistrictUrlItem(scrapy.Item):
+    url = scrapy.Field()
+
+
 class IndustryUrlItem(scrapy.Item):
     url = scrapy.Field()
 
@@ -25,3 +29,5 @@ class Phone58Item(scrapy.Item):
     website = scrapy.Field()
     address = scrapy.Field()
     pass
+
+
