@@ -82,7 +82,7 @@ DEFAULT_REQUEST_HEADERS = {
     'Cache-Control': 'max-age=0',
 }
 
-# Enable or disable spider middlewares
+# Enable or disable spiders middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {
 #    'phone58.middlewares.Phone58SpiderMiddleware': 543,
