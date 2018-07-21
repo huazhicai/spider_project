@@ -35,12 +35,12 @@ class Kefu58Pipeline(object):
     def process_item(self, item, spider):
         if type(item).__name__ == 'Kefu58Item':
             select = self.cursor.execute("select id from hz_kefu where website='%s'" % item['website'])
-            insert_sql = """insert into hz_kefu(title,salary,company,`scale`,industry,
-                            contacts,phone,website,address) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+            insert_sql = """insert into hz_kefu(company,`scale`,industry,
+                            contacts,phone,website,address) values(%s,%s,%s,%s,%s,%s,%s)"""
             if not select:
                 try:
                     self.cursor.execute(insert_sql, (
-                        item['title'], item['salary'], item['company'], item['scale'],
+                        item['company'], item['scale'],
                         item['industry'], item['contacts'], item['phone'], item['website'], item['address']
                     ))
                     self.cursor.connection.commit()

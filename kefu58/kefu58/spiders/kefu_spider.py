@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 import random
 import re
@@ -8,50 +9,53 @@ import urllib.request
 import scrapy
 from PIL import Image
 from pytesseract import pytesseract
+from redis import StrictRedis, ConnectionPool
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 
 from ..items import Kefu58Item
 
 
-class KefuSpider(CrawlSpider):
+class KefuSpider(scrapy.Spider):
     name = 'kefu'
-    # allowed_domains = ['hz.58.com/job/']
-    start_urls = ['http://hz.58.com/zptaobao/?key=%E5%AE%A2%E6%9C%8D&final=1&jump=1']
+    # redis_key = "company_url:items"
+    start_urls = ['http://qy.58.com/49312589047318/']
 
-    rules = [
-        Rule(LinkExtractor(restrict_xpaths=('//*[@id="filterArea"]/ul/li[position()>1]',)),
-             callback='parse_item'),
-    ]
+    # def __init__(self):
+    #     redis_config = {
+    #         "host": "localhost", #redis ip
+    #         "port": 6379,
+    #         "db": 0,
+    #     }
+    #     pool = ConnectionPool(**redis_config)
+    #     self.pool = pool
+    #     self.redis = StrictRedis(connection_pool=pool)
+    #     self.key = "company_url:items"
+    #
+    # def redis_pop(self):
+    #     item = self.redis.lpop(self.key)
+    #     yield json.loads(item)
+    #
 
-    def parse_item(self, response):
-        self.logger.info("Start Crawl Index: %s" % response.url)
-        resp = response.xpath('//*[@id="list_con"]/li')
-        for i in resp:
-            item = Kefu58Item()
-            title = i.xpath('.//div[@class="job_name clearfix"]/a/span/text()').extract()
-            item['title'] = title[0] + '|' + title[-1]
-            item['salary'] = i.xpath('.//p[@class="job_salary"]/text()').extract_first()
-            item['company'] = i.xpath('.//div[@class="comp_name"]/a/text()').extract_first()
-            item['phone'] = None
-            uid = i.xpath('.//div[@class="item_con job_comp"]/input/@uid').extract_first().split('_')[0]
-            mingqi = i.xpath('.//div[@class="comp_name"]/i[@class="comp_icons mingqi"]')
-            if mingqi:
-                url = "http://qy.58.com/mq/" + uid + '/'
-                yield scrapy.Request(url, meta={'item': item}, callback=self.parse_detail_mq)
-            else:
-                url = "http://qy.58.com/" + uid + '/'
-                yield scrapy.Request(url, meta={'item': item}, callback=self.parse_detail)
-        next_page = response.xpath('//div[@class="pagesout"]/a[@class="next"]/@href').extract_first()
-        if next_page is not None:
-            yield response.follow(next_page, callback=self.parse_item)
+    # def start_requests(self):
+    #     start_urls = [i.get('url', None) for i in self.redis_pop()]
+    #     for url in start_urls:
+    #         yield scrapy.Request(url, callback=self.parse, dont_filter=True)
+
+    def parse(self, response):
+        if 'mq' in response.url:
+            self.parse_detail_mq(response)
+        else:
+            self.parse_detail(response)
 
     def parse_detail_mq(self, response):
         self.logger.info("Crawling Mq Detail: {}".format(response.url))
-        item = response.meta['item']
+        item = Kefu58Item()
+        item['company'] = response.xpath('//div[@class="intro_middle"]/h3/text()').extract_first()
         item['scale'] = response.xpath('//div[@class="intro_down"]/table/tbody/tr[2]/td[3]/text()').extract_first()
         item['industry'] = response.xpath('//div[@class="intro_down"]/table/tbody/tr[4]/td[1]/a/text()').extract_first()
         item['contacts'] = response.xpath('//div[@class="intro_down"]/table/tbody/tr[4]/td[2]/text()').extract_first()
+        item['phone'] = None
         url = response.xpath('//div[@class="intro_down"]/table/tbody/tr[6]/td[3]/a/@href').extract_first()
         item['website'] = url
         item['address'] = response.xpath(
@@ -80,12 +84,12 @@ class KefuSpider(CrawlSpider):
 
     def parse_detail(self, response):
         self.logger.info("Crawling Detail: {}".format(response.url))
-        item = response.meta['item']
+        item = Kefu58Item()
+        item['company'] = response.xpath('//div[@class="compT"]/h1/a/@title').extract_first()
         item['scale'] = response.xpath('//div[@class="basicMsg"]/ul/li[7]/text()').extract_first()
         item['industry'] = response.xpath('//div[@class="basicMsg"]/ul/li[9]/div/a/text()').extract_first()
-        # /html/body/div[4]/div[1]/div[2]/div[2]/ul/li[2]
         item['contacts'] = response.xpath('//div[@class="basicMsg"]/ul/li[2]/text()').extract_first()
-        # /html/body/div[4]/div[1]/div[2]/div[2]/ul/li[6]/a
+        item['phone'] = None
         url = response.xpath('//div[@class="basicMsg"]/ul/li[6]/a/text()').extract_first()
         item['website'] = url
         item['address'] = response.xpath('//div[@class="basicMsg"]/ul/li[8]/div/var/text()').extract_first()
@@ -93,7 +97,6 @@ class KefuSpider(CrawlSpider):
             time.sleep(random.randint(1, 2))
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_phone)
         elif url and 'qy.58.com' in url:
-            time.sleep(random.randint(1, 2))
             img_url = response.xpath('//div[@class="basicMsg"]/ul/li[4]/img/@src').extract_first()
             if img_url is not None:
                 item['phone'] = self.download_read_phone(img_url, url)

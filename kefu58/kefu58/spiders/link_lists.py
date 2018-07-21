@@ -1,64 +1,37 @@
-#!/usr/bin/env python
-# coding=utf-8
-
-
-import re
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import scrapy
-import demjson
-from ..items import UrlItem
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+
+from ..items import CompanyUrlItem
 
 
-class ListSpider(scrapy.Spider):
-    name = 'link_list'
-    allowed_domains = ['qq.com']
-    start_urls = ['http://hz.58.com/zptaobao/?key=%E5%AE%A2%E6%9C%8D&final=1&jump=1']
+class CompanySpider(CrawlSpider):
+    """Follow categories and extract links."""
+    name = 'company_url'
+    start_urls = ['http://hz.58.com/zptaobaokefu/']
 
-    custom_settings = {
-        'CONCURRENT_REQUESTS': 64,
-        'DOWNLOAD_DELAY': 0,
-        'COOKIES_ENABLED': False,
-        'LOG_LEVEL': 'INFO',
-        'RETRY_TIMES': 15,
-        'DEFAULT_REQUEST_HEADERS': {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'cache-control': 'max-age=0',
-        },
-        'REDIS_HOST': '127.0.0.1',
-        'REDIS_PORT': '6379',
-        'REDIS_DB': '0',
-        'ITEM_PIPELINES': {
-            'qq_news.pipelines.RedisStartUrlsPipeline': 301,
-        },
-        'DOWNLOADER_MIDDLEWARES': {
-            # 'qq_news.middlewares.ProxyMiddleware': 543,
-        },
-    }
+    rules = [
+        Rule(LinkExtractor(restrict_xpaths=('//*[@id="filterArea"]/ul/li[position()>1]',)),
+             callback='parse_directory')
+    ]
 
-    def parse(self, response):
-        """
-        采集所有子分类的链接
-        :param response:
-        :return: detail response
-        """
-        urls_list = []
-        for i in response.xpath('//*[@id="wrapCon"]/div/div[1]/div[2]/dl'):
-            urls = i.xpath('dd/ul/li/strong/a/@href').extract() or i.xpath('dd/ul/li/a/@href').extract()
-            urls_list.extend(i.strip() for i in urls)
-        for url in urls_list:
-            yield scrapy.Request(url, callback=self.parse_url)
-
-    def parse_url(self, response):
-        """
-        去子分类下采集所有符合要求的详情链接，从移动端爬数据
-        :param response: http://news.qq.com/
-        :return:
-        """
-        pat = re.compile('http://new.qq.com/.*/.*.html')
-        detail_urls = pat.findall(response.text)
-        for url in detail_urls:
-            item = NewsUrlItem()
-            item['url'] = url
-            yield item
-
+    def parse_directory(self, response):
+        self.logger.info("Crawling: %s" % response.url)
+        base_url = 'http://qy.58.com/'
+        urls = response.xpath('//*[@id="list_con"]/li')
+        for url in urls:
+            item = CompanyUrlItem()
+            uid = url.xpath('.//div[@class="item_con job_comp"]/input/@uid').extract_first().split('_')[0]
+            mingqi = url.xpath('.//div[@class="comp_name"]/i/@class').extract_first()
+            if mingqi and 'mingqi' in mingqi:
+                item['url'] = base_url + 'mq/' + uid + '/'
+                yield item
+            else:
+                item['url'] = base_url + uid + '/'
+                print(item)
+                yield item
+        next_page = response.xpath('//div[@class="pagesout"]/a[@class="next"]/@href').extract_first()
+        if next_page is not None:
+            yield response.follow(next_page, callback=self.parse_directory)

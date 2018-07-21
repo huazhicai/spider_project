@@ -145,13 +145,14 @@ REDIS_DB = 0
 
 # 必须1：表示使用scrapy-redis提供的去重类，也就是在Redis数据库中去重
 DUPEFILTER_CLASS = "scrapy_redis.dupefilter.RFPDupeFilter"
+SCHEDULER_QUEUE_CLASS = 'scrapy_redis.queue.PriorityQueue'
 
 # 必须2：表示使用scrapy-redis提供的调度器类，也就是和Redis数据库交互请求数据
 SCHEDULER = "scrapy_redis.scheduler.Scheduler"
 
 
 # 必须3：表示程序可以中途暂停，不清空Redis的请求队列
-SCHEDULER_PERSIST = True
+# SCHEDULER_PERSIST = True
 
 
 

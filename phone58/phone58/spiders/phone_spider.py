@@ -62,13 +62,30 @@ class PhoneSpiderSpider(RedisSpider):
         else:
             yield scrapy.Request(url, meta={'item': item}, callback=self.parse_official)
 
+    # 调整图片大小和灰度
+    def enhance_image(self, image):
+        image = Image.open(image)
+        image = image.convert('L')
+        w, h = image.size
+        resize = image.resize((2 * w, 2 * h))
+        threshold = 125
+        table = []
+        for i in range(256):
+            if i < threshold:
+                table.append(0)
+            else:
+                table.append(1)
+        image = resize.point(table, '1')
+        return image
+
     # 下载并读取图片上的电话号码
     def download_read_phone(self, img_url, url):
         # 图片下载保存路径要用绝对路径
         img_file = os.path.dirname(os.path.abspath(__file__)) + '\images\%s.gif' % url.split('/')[-2]
         if not os.path.exists(img_file):
             urllib.request.urlretrieve(img_url, img_file)
-        text = pytesseract.image_to_string(Image.open(img_file))
+        im = self.enhance_image(img_file)
+        text = pytesseract.image_to_string(Image.open(im))
         return text
 
     def parse_detail(self, response):
@@ -97,6 +114,8 @@ class PhoneSpiderSpider(RedisSpider):
             phone_obj = re.search(r'联系电话.*?<span>(.+?)</span>', response.text)
             if phone_obj is not None:
                 item['phone'] = phone_obj.group(1)
+
+
         yield item
 
     # 解析公司官网

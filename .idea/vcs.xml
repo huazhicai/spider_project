@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="F:/Practice/Douban_scrapy" vcs="Git" />
+    <mapping directory="F:/Practice/Python3WebSpider" vcs="Git" />
   </component>
 </project>
